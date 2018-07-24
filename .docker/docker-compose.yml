@@ -1,0 +1,33 @@
+version: '3.1'
+
+services:
+
+  endpoint:
+    build: endpoint/
+    image: jhdm/iiif-pres:test1
+    container_name: iiif_pres
+    env_file: .env
+    # volumes:
+    #   - ${ARCHIVE_PATH}:/archive:Z
+    #   - ${IIIF_CODE_PATH}:/code:Z
+    ports:
+      - "${IIIF_PRES_PORT}:${IIIF_PRES_PORT}"
+    networks:
+      - front
+
+  viewer:
+    build: viewer/
+    image: jhdm/iiif-viewer:test1
+    container_name: viewer
+    env_file: .env
+    volumes:
+      - ../:/app:Z
+      - /app/node_modules
+    ports:
+      - "${VIEWER_PORT}:${VIEWER_PORT}"
+    networks:
+      - front
+
+networks:
+  front:
+    driver: bridge
