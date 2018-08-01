@@ -15,6 +15,13 @@
         error: '<h1 class="error">Failed to load annotation list.</h1>',
         empty: '<h1 class="empty">No annotations available.</h1>',
         noLists: '<h1 class="empty">No annotations found.</h1>',
+      },
+      mouse: {
+        leftClick: false,
+        rightClick: false
+      },
+      search: {
+        defaultUrl: ''
       }
     }, options);
 
@@ -28,6 +35,11 @@
       this.element = jQuery(this.template()).appendTo(this.appendTo);
       this.bindEvents();
       this.listenForActions();
+
+      // Set default search URL to the search endpoint of the manifest's parent collection
+      this.search = {
+        defaultUrl: this.manifest.jsonLd.within['@id'] + '/jhsearch'
+      };
     },
 
     bindEvents: function() {
@@ -70,6 +82,7 @@
     listenForThings: function() {
       this.listenForInternalRefs();
       this.listenForPeopleClicks();
+      this.listenForRightClickSelection();
       // this.listenForSearchClicks();
     },
 
@@ -109,6 +122,43 @@
       });
     },
 
+    listenForRightClickSelection: function() {
+      var _this = this;
+
+      this.element.contextMenu({
+        selector: '.annotations',
+        trigger: 'right',
+        build: function($trigger, e) {
+          var selection = window.getSelection();
+
+          if (!selection || selection.toString() === '') {
+            return false;
+          }
+          
+          var term = selection.toString();
+          var within = _this.search.defaultUrl;
+          var field;
+
+          if (selection.focusNode === selection.anchorNode) {
+            within = jQuery(selection.focusNode.parentNode).data('searchwithin') || _this.search.defaultUrl;
+            field = jQuery(selection.focusNode.parentNode).data('searchfield');
+          }
+
+          return {
+            items: {
+              'search': {
+                name: 'Search',
+                icon: 'fa-search',
+                callback: function() {
+                  _this.doSearch(within, term, field);
+                }
+              }
+            }
+          };
+        }
+      });
+    },
+
     /**
      * @param {string} searchWithin : search will be done within this URI
      * @param {string} term : search term
@@ -120,36 +170,19 @@
         searchWithin += (searchWithin.charAt(searchWithin.length - 1) === '/' ? '' : '/') + 'jhsearch';
       }
 
-      var request = {
-        service: searchWithin,
-        query: $.generateBasicQuery(term, Array.of(field), '&')
-      };
-      this.eventEmitter.publish('REQUEST_SEARCH.' + this.windowId, request);
+      if (field || field === '') {
+        this.eventEmitter.publish('REQUEST_SEARCH.' + this.windowId, {
+          service: searchWithin,
+          query: $.generateBasicQuery(term, Array.of(field), '&')
+        });
+      } else {
+        this.eventEmitter.publish('REQUEST_SEARCH.' + this.windowId, {
+          service: searchWithin,
+          query: term,
+          generateQuery: true
+        });
+      }
     },
-
-    // listenForSearchClicks: function() {
-    //   var _this = this;
-
-    //   this.element.find('a.searchable').click(function() {
-    //     var el = jQuery(this);
-
-    //     var searchField = el.data('searchfield');
-    //     var searchTerm = el.text().replace(/,?\s*/, '');
-    //     var withinUri = el.data('searchwithin');
-
-    //     // Mush on search URL end if needed
-    //     if (withinUri.indexOf('jhsearch') < 0) {
-    //       withinUri += (withinUri.charAt(withinUri.length - 1) === '/' ? '' : '/') + 'jhsearch';
-    //     }
-
-    //     var request = {
-    //       service: withinUri,
-    //       query: $.generateBasicQuery(searchTerm, Array.of(searchField), '&')
-    //     };
-        
-    //     _this.eventEmitter.publish('REQUEST_SEARCH.' + _this.windowId, request);
-    //   });
-    // },
 
     listenForInternalRefs: function() {
       var _this = this;
@@ -166,7 +199,7 @@
         var targetManifest = el.data('manifestid');
         var targetObject = el.data('targetid');
         var needNewManifest = targetManifest === _this.manifest.getId();
-console.log('## Click! ' + targetManifest);
+
         if (targetManifest === targetObject) {
           // Target object is a manifest, open thumbnail view
           if (needNewManifest) {

@@ -245,23 +245,55 @@
           console.log(' Sad moo ' + JSON.stringify(data));
           return;
         }
-        console.log("Received a search request in this window! " + _this.windowId + "\n" + JSON.stringify(data));
+        // console.log("Received a search request in this window! " + _this.windowId + "\n" + JSON.stringify(data));
         // We want to toggle the search tab on, then send a search request to the search controller
         // var index = -1;
 
         var index = _this.appendTo.find('.tabGroup .tab[data-tabid=searchTab]').index();
-        console.log(' >> Should update tab ' + index);
+        // console.log(' >> Should update tab ' + index);
         _this.eventEmitter.publish('tabSelected.' + _this.windowId, index);
 
-        if (index) {
-          _this.eventEmitter.publish('SEARCH', {
-            'origin': _this.windowId,
-            'service': data.service,
-            'query': data.query
-          });
+        if (index && !data.generateQuery) {
+          _this.doSearch(data.service, data.query);
+        } else if (index) {
+          _this.getQueryAndSearch(data.service, data.query);
         }
       });
+    },
 
+    doSearch: function(service, query) {
+      this.eventEmitter.publish('SEARCH', {
+        'origin': this.windowId,
+        'service': service,
+        'query': query
+      });
+    },
+
+    /**
+     * 
+     * @param {string} service - search service URL
+     * @param {string} term - term to search for
+     * @param {string} field - (OPTIONAL) search field(s)
+     */
+    getQueryAndSearch: function(service, term, field) {
+      var _this = this;
+
+      var key = $.genUUID();
+      this.eventEmitter.publish('GET_SEARCH_SERVICE', {
+        origin: key,
+        serviceId: service
+      });
+
+      var eventName = 'SEARCH_SERVICE_FOUND.' + key;
+      this.eventEmitter.subscribe(eventName, function(event, data) {
+        _this.eventEmitter.unsubscribe(eventName);
+
+        _this.doSearch(data.service, $.generateBasicQuery(
+          term,
+          data.service.config.getDefaultFields(),
+          data.service.config.query.delimiters.or
+        ));
+      });
     },
 
     render: function(renderingData) {
