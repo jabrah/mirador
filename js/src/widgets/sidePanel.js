@@ -206,14 +206,6 @@
       this.updateState(currentState);
     },
 
-    // doesn't do anything right now
-    // getTemplateData: function() {
-    //     return {
-    //         annotationsTab: this.state().annotationsTab,
-    //         tocTab: this.state().tocTab
-    //     };
-    // },
-
     listenForActions: function() {
       var _this = this;
       _this.eventEmitter.subscribe('sidePanelStateUpdated.' + this.windowId, function(_, data) {
@@ -249,50 +241,18 @@
         // We want to toggle the search tab on, then send a search request to the search controller
         // var index = -1;
 
-        var index = _this.appendTo.find('.tabGroup .tab[data-tabid=searchTab]').index();
-        // console.log(' >> Should update tab ' + index);
-        _this.eventEmitter.publish('tabSelected.' + _this.windowId, index);
-
-        if (index && !data.generateQuery) {
-          _this.doSearch(data.service, data.query);
-        } else if (index) {
-          _this.getQueryAndSearch(data.service, data.query);
-        }
+        _this.doSearch(data.service, data.query);
       });
     },
 
     doSearch: function(service, query) {
+      var index = this.appendTo.find('.tabGroup .tab[data-tabid=searchTab]').index();
+        // console.log(' >> Should update tab ' + index);
+      this.eventEmitter.publish('tabSelected.' + this.windowId, index);
       this.eventEmitter.publish('SEARCH', {
         'origin': this.windowId,
         'service': service,
         'query': query
-      });
-    },
-
-    /**
-     * 
-     * @param {string} service - search service URL
-     * @param {string} term - term to search for
-     * @param {string} field - (OPTIONAL) search field(s)
-     */
-    getQueryAndSearch: function(service, term, field) {
-      var _this = this;
-
-      var key = $.genUUID();
-      this.eventEmitter.publish('GET_SEARCH_SERVICE', {
-        origin: key,
-        serviceId: service
-      });
-
-      var eventName = 'SEARCH_SERVICE_FOUND.' + key;
-      this.eventEmitter.subscribe(eventName, function(event, data) {
-        _this.eventEmitter.unsubscribe(eventName);
-
-        _this.doSearch(data.service, $.generateBasicQuery(
-          term,
-          data.service.config.getDefaultFields(),
-          data.service.config.query.delimiters.or
-        ));
       });
     },
 

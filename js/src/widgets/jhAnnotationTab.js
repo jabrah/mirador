@@ -21,7 +21,9 @@
         rightClick: false
       },
       search: {
-        defaultUrl: ''
+        defaultUrl: '',
+        service: null,
+        config: null
       }
     }, options);
 
@@ -31,6 +33,7 @@
   $.JhAnnotationTab.prototype = {
     init: function() {
       console.assert(this.manifest, '[jhAnnotationTab] Manifest must be provided.');
+      this.componentId = this.windowId + this.tabId;
       this.registerWidget();
       this.element = jQuery(this.template()).appendTo(this.appendTo);
       this.bindEvents();
@@ -40,6 +43,10 @@
       this.search = {
         defaultUrl: this.manifest.jsonLd.within['@id'] + '/jhsearch'
       };
+      this.eventEmitter.publish('GET_SEARCH_SERVICE', {
+        origin: this.componentId,
+        serviceId: this.search.defaultUrl
+      });
     },
 
     bindEvents: function() {
@@ -57,6 +64,11 @@
         } else {
           _this.element.hide();
         }
+      });
+
+      this.eventEmitter.subscribe('SEARCH_SERVICE_FOUND.' + this.componentId, function(e, data) {
+        _this.search.service = data.service;
+        _this.search.config = data.service.config; // Why is this even necessary :(
       });
     },
 
@@ -83,41 +95,16 @@
       this.listenForInternalRefs();
       this.listenForPeopleClicks();
       this.listenForRightClickSelection();
-      // this.listenForSearchClicks();
     },
 
     listenForPeopleClicks: function() {
-      var _this = this;
-
-      var options = {
-        'search': { name: 'Search', icon: 'fa-search' },
-        'isni': { name: 'ISNI', icon: 'fa-external-link' },
-        'external': { name: 'External link', icon: 'fa-external-link'}
-      };
-
-      this.element.contextMenu({
-        selector: 'a.searchable',
-        trigger: 'left',
-        build: function($trigger, e) {
-          var items = {};
-          if ($trigger.hasClass('searchable')) {
-            items.search = options.search;
-            items.search.callback = function() {
-              var within = $trigger.data('searchwithin');
-              var field = $trigger.data('searchfield');
-              var term = $trigger.text();
-              _this.doSearch(within, term, field);
-            };
-          }
-          if ($trigger.data('isni')) {
-            items.isni = options.isni;
-            items.isni.callback = function() {
-              window.open($trigger.data('isni'), '_blank');
-            };
-          }
-          return {
-            items: items
-          };
+      this.element.find('a').filter(function(index, el) {
+        var isni = jQuery(el).data('isni');
+        return isni && isni !== '';
+      }).click(function() {
+        var link = jQuery(this).data('isni');
+        if (link && link !== '') {
+          window.open(link, '_blank');
         }
       });
     },
@@ -170,7 +157,7 @@
         searchWithin += (searchWithin.charAt(searchWithin.length - 1) === '/' ? '' : '/') + 'jhsearch';
       }
 
-      if (field || field === '') {
+      if (field && field !== '') {
         this.eventEmitter.publish('REQUEST_SEARCH.' + this.windowId, {
           service: searchWithin,
           query: $.generateBasicQuery(term, Array.of(field), '&')
@@ -178,8 +165,11 @@
       } else {
         this.eventEmitter.publish('REQUEST_SEARCH.' + this.windowId, {
           service: searchWithin,
-          query: term,
-          generateQuery: true
+          query: $.generateBasicQuery(
+            term,
+            this.search.config.getDefaultFields(),
+            this.search.config.query.delimiters.or
+          )
         });
       }
     },
