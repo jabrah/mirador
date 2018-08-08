@@ -105,7 +105,7 @@
       }
 
       if (_this.annotationsTabAvailable) {
-        this.searchTab = new $.JhAnnotationTab({
+        this.annoTab = new $.JhAnnotationTab({
           manifest: _this.manifest,
           // parent: _this.parent,
           appendTo: _this.element.find('.tabContentArea'),
@@ -137,7 +137,7 @@
       }
 
       if (_this.searchTabAvailable) {
-        new $.NewSearchWidget({
+        this.searchTab = new $.NewSearchWidget({
           startHidden: true,
           windowId: this.windowId,
           appendTo: this.element.find(".tabContentArea"),
@@ -247,6 +247,16 @@
 
     doSearch: function(service, query) {
       var index = this.appendTo.find('.tabGroup .tab[data-tabid=searchTab]').index();
+
+      // Add some initialization to search tab
+      this.searchTab.context = {
+        searchService: typeof service === 'string' ? service : service.id,
+        search: {
+          query: query,
+          offset: 0
+        }
+      };
+
         // console.log(' >> Should update tab ' + index);
       this.eventEmitter.publish('tabSelected.' + this.windowId, index);
       this.eventEmitter.publish('SEARCH', {
