@@ -75,37 +75,42 @@
 
     listenForPeopleClicks: function() {
       var _this = this;
-
-      var options = {
-        'search': { name: 'Search', icon: 'fa-search' },
-        'isni': { name: 'ISNI', icon: 'fa-external-link' },
-        'external': { name: 'External link', icon: 'fa-external-link'}
-      };
-
-      this.element.contextMenu({
-        selector: 'a.searchable',
-        trigger: 'left',
-        build: function($trigger, e) {
-          var items = {};
-          if ($trigger.hasClass('searchable')) {
-            items.search = options.search;
-            items.search.callback = function() {
-              var within = $trigger.data('searchwithin');
-              var field = $trigger.data('searchfield');
-              var term = $trigger.text();
-              _this.doSearch(within, term, field);
-            };
-          }
-          if ($trigger.data('isni')) {
-            items.isni = options.isni;
-            items.isni.callback = function() {
-              window.open($trigger.data('isni'), '_blank');
-            };
-          }
-          return {
-            items: items
-          };
+      this.element.find('.annotationItem .searchable').hover(function () {
+        var el = jQuery(this);
+        // append icon if necessary
+        if (el.find('.fa-search').length === 0) {
+          el.append(jQuery('<i class="fa fa-search"></i>'));
+          el.find('.fa-search').click(function() {
+            var el = jQuery(this);
+    
+            var within = el.parent().data('searchwithin');
+            var field = el.parent().data('searchfield');
+            var term = el.parent().text();
+    
+            _this.doSearch(within, term, field);
+          });
         }
+        el.find('.fa-search').show();
+      }, function () {
+        jQuery(this).find('.fa-search').hide();
+      });
+
+      this.element.find('.annotationItem [data-isni]').hover(function () {
+        var el = jQuery(this);
+        if (el.find('.fa-external-link').length === 0) {
+          el.append(jQuery('<i class="fa fa-external-link"></i>'));
+          el.find('.fa-external-link').click(function() {
+            var el = jQuery(this);
+    
+            var url = el.parent().data('isni');
+            if (url && url.length > 0) {
+              window.open(url, '_blank');
+            }
+          });
+        }
+        el.find('.fa-external-link').show();
+      }, function () {
+        jQuery(this).find('.fa-external-link').hide();
       });
     },
 

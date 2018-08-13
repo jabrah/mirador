@@ -568,3 +568,10 @@ a.external-link:after {
   width: 50px;
   float: left;
 }
+
+.annotationItem i.fa {
+  padding: 2px 5px;
+}
+.annotationItem i.fa:hover {
+  background-color: lightgray;
+}
