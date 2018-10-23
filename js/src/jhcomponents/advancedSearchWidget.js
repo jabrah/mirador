@@ -35,18 +35,27 @@
         "search": _this.searchService
       })).appendTo(this.appendTo);
 
-      this.element.tooltip({
-        items: ".search-description-icon",
-        content: Handlebars.compile("{{> searchDescription}}")(this.searchService.config.search.settings.fields),
-        position: { my: "left+20 top", at: "right top-50" }
-      });
-
       if (this.context && this.context.ui && this.context.ui.advanced) {
         this.initFromContext();
       }
 
+      // this.setTooltip(this.searchService);
       this.bindEvents();
       this.listenForActions();
+      // this.addAdvancedSearchLine();
+    },
+
+    setTooltip: function (searchService) {
+      this.element.tooltip({
+        items: ".search-description-icon",
+        content: Handlebars.compile("{{> searchDescription}}")(searchService.config.search.settings.fields),
+        position: { my: "left+20 top", at: "right top-50" }
+      });
+    },
+
+    setSearchService: function (searchService) {
+      this.searchService = searchService;
+      this.setTooltip(searchService);
       this.addAdvancedSearchLine();
     },
 
@@ -94,9 +103,16 @@
       this.element = null;
     },
 
-    setContext: function(context) {
+    /**
+     * 
+     * @param context the new context
+     * @param {boolean} refresh should this context change rerender the widget?
+     */
+    setContext: function(context, refresh) {
       this.context = context;
-      this.initFromContext();
+      if (refresh) {
+        this.initFromContext();
+      }
     },
 
     hasQuery: function() {
@@ -142,6 +158,9 @@
       return $.generateQuery(parts, this.searchService.config.query.delimiters.field);
     },
 
+    /**
+     * @returns array of rows active in the widget
+     */
     searchState: function() {
       var adv = [];
       this.element.find(".advanced-search-line").each(function(row, line) {
