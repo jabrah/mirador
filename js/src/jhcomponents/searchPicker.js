@@ -1,7 +1,7 @@
 (function ($) {
   $.SearchPicker = function (options) {
     jQuery.extend(true, this, {
-      windowId: null,
+      windowId: undefined,
       tabId: null,
       parent: null,
       element: null,
@@ -10,6 +10,7 @@
       eventEmitter: null,
       
       baseObject: null,
+      searchServices: [],
 
       config: {
         inSidebar: false,
@@ -26,18 +27,12 @@
   $.SearchPicker.prototype = {
     init: function () {
       this.element = jQuery(this.template({
-        inSidebar: this.config.inSidebar
-      }));
+        inSidebar: this.config.inSidebar,
+        showCollectionPicker: this.config.showCollectionPicker
+      })).appendTo(this.appendTo);
 
       this.bindEvents();
       this.listenForActions();
-
-      // if (this.baseObject) {
-      //   this.eventEmitter.publish('GET_RELATED_SEARCH_SERVICES', {
-      //     origin: this.windowId,
-      //     baseObject: this.baseObject
-      //   });
-      // }
     },
 
     bindEvents: function () {
@@ -71,24 +66,9 @@
     },
 
     switchSearchServices: function (service) {
-      const _this = this;
-
-      const searchServiceFoundHandler = function (event, data) {
-        if (data.origin !== _this.windowId) {
-          return;
-        }
-
-        _this.eventEmitter.publish("SEARCH_CONTEXT_UPDATED", {
-          origin: _this.windowId,
-          searchService: data.service,
-        });
-        _this.eventEmitter.publish("SEARCH_SIZE_UPDATED." + _this.windowId);
-        _this.eventEmitter.unsubscribe('SEARCH_SERVICE_FOUND.' + this.windowId, searchServiceFoundHandler);
-      };
-      this.eventEmitter.subscribe('SEARCH_SERVICE_FOUND.' + this.windowId, searchServiceFoundHandler);
-      this.eventEmitter.publish('GET_SEARCH_SERVICE', {
+      this.eventEmitter.publish('SWITCH_SEARCH_SERVICE', {
         origin: this.windowId,
-        serviceId: service
+        service
       });
 
       this.element.find('.search-within-object-select').val(service.id);
@@ -125,29 +105,14 @@
       // Initialize advanced search with first encountered search service.
       // For subsequent services, if the service is supposed to be selected
       // according to a previous context, switch to it.
-      var initialCol = this.state.getStateProperty("initialCollection");
-      if (initialCol) {
-        if (initialCol && id.indexOf(initialCol) >= 0) {
-          // If there is an initialCollection to view, switch to it
-          this.getSearchService(id).done(function(s) {
-            _this.switchSearchServices(s);
-            if (!_this.advancedSearchSet) { _this.listenForActions(); }
-            _this.advancedSearchSet = true;
-          });
+      if ((this.context && this.context.searchService === id) || !this.advancedSearchSet) {
+        // When adding a search service, if the ID of the service matches the ID of the initialization value, 
+        // switch to it.
+        this.switchSearchServices(service);
+        if (!this.advancedSearchSet) {
+          this.listenForActions();
         }
-      } else if (this.context.searchService === id) {
-        // When adding a search service, if the ID of the service matches the ID of the initialization value, switch to it.
-        this.getSearchService(id).done(function(s) {
-          _this.switchSearchServices(s);
-          if (!_this.advancedSearchSet) { _this.listenForActions(); }
-          _this.advancedSearchSet = true;
-        });
-      } else if (!this.advancedSearchSet) {
-        this.getSearchService(id).done(function(s) {
-          _this.switchSearchServices(s);
-          _this.listenForActions();
-        });
-        _this.advancedSearchSet = true;
+        this.advancedSearchSet = true;
       }
     },
 

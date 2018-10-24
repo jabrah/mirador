@@ -43,11 +43,11 @@
       this.facetable = this.state.getStateProperty('manifestList').enableFacets;
       this.searchConfig = this.state.getStateProperty('manifestList').search;
       this.showLogos = this.state.getStateProperty('manifestList').showLogos;
-console.log();
+
       if (this.hasSearcher) {
         this.searcher = new $.SearchContainer({
           "appendTo": this.element.find(".browser-search"),
-          "windowId": $.genUUID(),
+          "windowId": undefined,
           "eventEmitter": this.eventEmitter,
           "state": this.state,
           "showHideAnimation": { duration: 160, easing: "easeOutCubic", queue: false },
@@ -60,6 +60,12 @@ console.log();
           },
           "onFacetSelect": function (selected) {
             _this.filterManifestList(selected);
+          },
+          searchController: new $.SearchController({
+            eventEmitter: this.eventEmitter
+          }),
+          context: {
+            searchService: this.state.getStateProperty('initialCollection') // Set initial collection, if possible
           }
         });
 

@@ -30,7 +30,7 @@
    */
   $.SearchWidget = function (options) {
     jQuery.extend(true, this, {
-      windowId: null,
+      windowId: undefined,
       tabId: null,
       parent: null,
       element: null,
@@ -246,7 +246,8 @@
      * 
      * @param context see documentation for this.context above
      * @param {boolean} init - rerender the search UI
-     * @param {boolean} suppressEvent - no event is fired if this is TRUE
+     * @param {boolean} suppressEvent - no event is fired if this is TRUE. Useful if a context
+     *                                  change comes from this widget and has already been applied
      */
     changeContext: function (context, init, suppressEvent) {
       jQuery.extend(true, this.context, context);

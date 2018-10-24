@@ -9,7 +9,7 @@
   $.SearchContainer = function (options) {
     jQuery.extend(true, this, {
       id: $.genUUID(),  // ID for this component
-      windowId: null,
+      windowId: undefined,
       tabId: null,
       parent: null,
       element: null,
@@ -22,7 +22,7 @@
       baseObject: null,
 
       searchController: null,
-      facetPanel: null,
+      facetContainer: null,
       searchWidget: null,
       searchPicker: null,
       searchResults: null,
@@ -108,27 +108,24 @@
         context: this.context
       }));
 
+      if (!this.config.inSidebar && this.config.allowFacets) {
+        this.facetContainer = new $.FacetContainer(jQuery.extend(true, baseConfig, {}));
+      }
+
       this.bindEvents();
     },
 
     bindEvents: function () {
       const _this = this;
 
-      this.eventEmitter.subscribe('SEARCH_CONTEXT_UPDATED', function (event, data) {
+      this.eventEmitter.subscribe('SEARCH_CONTEXT_UPDATED', (event, data) => {
         if (data.origin !== _this.windowId) {
           return;
         }
-
-        // On search service switch, clear advanced search rows
-        // if (data.context.hasOwnProperty('searchService')) {
-        //   delete _this.context.ui.advanced;
-        // }
-
-        jQuery.extend(true, _this.context, data.context);
-        _this.searchWidget.changeContext(_this.context, true, true);
+        _this.changeContext(data.context, true);
       });
 
-      this.eventEmitter.subscribe('SEARCH_REQUESTED', function (event, data) {
+      this.eventEmitter.subscribe('SEARCH_REQUESTED', (event, data) => {
         if (data.origin !== _this.windowId) {
           return;
         }
@@ -147,13 +144,35 @@
         _this.searchController.doSearch(searchRequest);
       });
 
-      this.eventEmitter.subscribe('ADD_IIIF_OBJECT', function (event, data) {
-        console.log('## ADD_IIIF_OBJECT');
-        console.log(data);
+      this.eventEmitter.subscribe('ADD_IIIF_OBJECT', (event, data) => {
         if (data.origin === _this.windowId) {
-          _this.addIIIFObject(data);
+          _this.addIIIFObject(data.object);
         }
       });
+
+      this.eventEmitter.subscribe('SWITCH_SEARCH_SERVICE', (event, data) => {
+        console.log('SWITCH_SEARCH_SERVICE');
+        console.log(data);
+        if (data.origin === _this.windowId) {
+          _this.switchSearchService(data.service);
+        }
+      });
+    },
+
+    changeContext: function (context, suppressEvent) {
+        // On search service switch, clear advanced search rows
+        // if (data.context.hasOwnProperty('searchService')) {
+        //   delete _this.context.ui.advanced;
+        // }
+        jQuery.extend(true, this.context, context);
+        this.searchWidget.changeContext(this.context, true, true);
+        this.facetContainer.changeContext(this.context);
+
+        if (!suppressEvent) {
+          this.eventEmitter.publish('SEARCH_CONTEXT_UPDATED', {
+            origin: this.windowId
+          });
+        }
     },
 
     /**
@@ -163,13 +182,38 @@
      * @param object : IIIF object as JSON
      */
     addIIIFObject: function(object) {
+      const _this = this;
+
       if (!object || typeof object !== "object") {
         return;
       }
 
-      this.eventEmitter.publish("GET_RELATED_SEARCH_SERVICES", {
-        "origin": this.windowId,
-        "baseObject": object
+      // At this point, the services are discovered, but not resolved. We do not
+      // have the full service configurations yet.
+      const searchSerivces = this.searchController.searchServicesInObject(object);
+      searchSerivces.forEach(service => _this.searchPicker.addSearchService(service));
+    },
+
+    /**
+     * @param {string|object} service the search service ID, or search service object with an 'id' property
+     */
+    getSearchService: function (service) {
+      if (typeof service === 'object') {
+        service = service.id;
+      }
+      const result = jQuery.Deferred();
+      this.searchController.getSearchService(service)
+        .done(s => result.resolve(s))
+        .fail(() => result.reject());
+      return result;
+    },
+
+    switchSearchService: function (service) {
+      const _this = this;
+      this.getSearchService(service).done(searchService => {
+        _this.searchWidget.changeContext({
+          searchService
+        }, true, false);
       });
     },
 
