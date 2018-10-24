@@ -151,11 +151,21 @@
       });
 
       this.eventEmitter.subscribe('SWITCH_SEARCH_SERVICE', (event, data) => {
-        console.log('SWITCH_SEARCH_SERVICE');
-        console.log(data);
         if (data.origin === _this.windowId) {
           _this.switchSearchService(data.service);
         }
+      });
+
+      // Facet search requested - update current search context and use it to issue a search request
+      this.eventEmitter.subscribe('REQUEST_FACETS', (event, data) => {
+        if (data.origin === _this.windowId) {
+          _this.context.search.facetQuery = data.facets;
+          _this.getFacets(data.facets);
+        }
+      });
+
+      this.eventEmitter.subscribe('FACETS_COMPLETE.' + this.windowId, (event, data) => {
+        _this.facetContainer.handleFacets(data.results, data.append);
       });
     },
 
@@ -214,6 +224,14 @@
         _this.searchWidget.changeContext({
           searchService
         }, true, false);
+      });
+    },
+
+    getFacets: function (facetQuery) {
+      this.eventEmitter.publish('GET_FACETS', {
+        origin: this.windowId,
+        service: this.context.searchService,
+        facets: facetQuery
       });
     },
 

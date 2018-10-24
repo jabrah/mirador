@@ -1,7 +1,18 @@
 (function ($) {
+  /**
+   * Events:
+   *    >> REQUEST_FACETS ::  data: {
+   *                            origin: '',
+   *                            facets: '',   // facets query
+   *                          }
+   *    >> UPDATE_FACET_BOOK_LIST ::  data: {
+   *                                    origin: '',
+   *                                    bookList: [],   // array of manifest IDs that match the facet search
+   *                                  }
+   */
   $.FacetContainer = function (options) {
     jQuery.extend(true, this, {
-      windowId: null,
+      windowId: undefined,
       eventEmitter: null,
       state: null,
       element: null,
@@ -25,7 +36,9 @@
     },
 
     bindEvents: function () {
-      this.eventEmitter.subscribe("FACET_SELECTED", function(event, data) {
+      const _this = this;
+
+      this.eventEmitter.subscribe("FACET_SELECTED", (event, data) => {
         if (_this.facetPanel && _this.facetPanel.id === data.origin) {
           _this.facetSelected(data.selected);
         }
@@ -38,6 +51,8 @@
 
     changeContext: function (context) {
       this.context = context;
+      this.initFacets();
+      this.getFacets();
     },
 
     getFacetsQuery: function() {
@@ -91,7 +106,7 @@
      * @param catId {string} category ID
      */
     getCategoryLabel: function(catId) {
-      var catConfig = this.searchService.config.search.settings.categories;
+      const catConfig = this.context.searchService.config.search.settings.categories;
       if (!catId || catConfig.filter(function(c) { return c.name === catId; }).length === 0) {
         return;   // Do nothing if there is no matching category
       }
@@ -108,7 +123,7 @@
      * @param catLabel {string} label for a category
      */
     getCategoryId: function(catLabel) {
-      var catConfig = this.searchService.config.search.settings.categories;
+      const catConfig = this.context.searchService.config.search.settings.categories;
       if (!catLabel || catConfig.filter(function(c) { return c.label === catLabel; }).length === 0) {
         return;   // Do nothing if there is no matching category
       }
@@ -142,7 +157,6 @@
     },
 
     getFacets: function(facets) {
-      var _this = this;
       if (!this.config.allowFacets) {
         return;
       }
@@ -167,21 +181,19 @@
         query = $.toTermList(facetParts);
       }
 
-      _this.eventEmitter.publish('GET_FACETS', {
-        origin: _this.windowId,
-        service: service,
+      this.eventEmitter.publish('REQUEST_FACETS', {
+        origin: this.windowId,
         facets: query
       });
     },
 
     handleFacets: function(searchResults, append) {
-      var _this = this;
-
       // Update visibility of manifests
       this.bookList = this.getManifestList(searchResults);
-      if (this.onFacetSelect) {
-        this.onFacetSelect(this.bookList);
-      }
+      this.eventEmitter.publish('UPDATE_FACET_BOOK_LIST', {
+        origin: this.windowId,
+        bookList: this.bookList
+      });
 
       if (!searchResults.categories) {
         console.log("[SW] No categories found in search results. " + searchResults["@id"]);
@@ -189,46 +201,37 @@
       }
 
       if (this.config.allowFacets && this.facetPanel) {
-        jQuery.when(this.resultsCategoriesToFacets(searchResults)).then(function(sr) {
-          if (append) {
-            sr.categories.forEach(function(cat) {
-              _this.facetPanel.addValues(cat.name, cat.values);
-            });
-          } else {
-            _this.facetPanel.setFacets(sr.categories);
-          }
-          _this.eventEmitter.publish("SEARCH_SIZE_UPDATED." + this.windowId);
-        });
-
+        const sr = this.resultsCategoriesToFacets(searchResults);
+        if (append) {
+          sr.categories.forEach(function(cat) {
+            this.facetPanel.addValues(cat.name, cat.values);
+          });
+        } else {
+          this.facetPanel.setFacets(sr.categories);
+        }
+        this.eventEmitter.publish("SEARCH_SIZE_UPDATED." + this.windowId);
       }
     },
 
     resultsCategoriesToFacets: function(searchResults) {
+      const _this = this;
+
       if (!searchResults || !Array.isArray(searchResults.categories)) {
         return searchResults;
       }
-      var _this = this;
-      var result = jQuery.Deferred();
-      jQuery.when(this.currentSearchService()).then(function(s) {
-        var categoryConfig = s.config.search.settings.categories;
-
-        searchResults.categories.forEach(function(cat) {
-          jQuery.extend(cat, {
-            "label": _this.getCategoryLabel(cat.name)
-          });
+      // const categoryConfig = this.context.searchService.config.search.settings.categories;
+      searchResults.categories.forEach(function(cat) {
+        jQuery.extend(cat, {
+          "label": _this.getCategoryLabel(cat.name)
         });
-
-        // Filter out any categories that have no label
-        searchResults.categories = searchResults.categories.filter(function(cat) {
-          return cat.label && cat.label.length > 0;
-        });
-
-        result.resolve(searchResults);
-      }).fail(function() {
-        result.reject();
       });
 
-      return result;
+      // Filter out any categories that have no label
+      searchResults.categories = searchResults.categories.filter(function(cat) {
+        return cat.label && cat.label.length > 0;
+      });
+
+      return searchResults;
     },
 
     /**

@@ -136,6 +136,12 @@
             _this.eventEmitter.publish('SEARCH_SIZE_UPDATED.' + _this.searcher.windowId);
           });
         });
+
+        _this.eventEmitter.subscribe('UPDATE_FACET_BOOK_LIST', (event, data) => {
+          if (data.origin === _this.windowId) {
+            _this.filterManifestList(data.bookList);
+          }
+        });
       }
     },
 
