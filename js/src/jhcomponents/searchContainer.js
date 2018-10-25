@@ -77,7 +77,9 @@
         inSidebar: false,
         showDescription: true,
         showCollectionPicker: true,
-        showHideAnimation: 'fast'
+        showHideAnimation: {
+          duration: 'fast'
+        }
       }
     }, options);
 

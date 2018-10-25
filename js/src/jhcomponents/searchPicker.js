@@ -39,8 +39,6 @@
       const _this = this;
 
       this.eventEmitter.subscribe("RELATED_SEARCH_SERVICES_FOUND." + this.windowId, function(event, data) {
-        console.log('SearchPicker ## RELATED_SEARCH_SERVICES_FOUND');
-        console.log(data);
         /*
          * Add search service ID to list.
          * Fetch info.json only when that service is selected for the first time.
@@ -59,8 +57,7 @@
         if (!el) {
           return;
         }
-        var selected = el.val();
-        _this.switchSearchServices(selected);
+        _this.switchSearchServices(el.val());
       };
 
       this.element.find(".search-within-object-select").on("change", selectChange);

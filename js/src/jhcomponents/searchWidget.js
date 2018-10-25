@@ -138,8 +138,8 @@
     listenForActions: function () {
       const _this = this;
 
-      if (typeof this.showHideAnimation === "object") {
-        this.showHideAnimation.progress = function() {
+      if (typeof this.config.showHideAnimation === "object") {
+        this.config.showHideAnimation.progress = function() {
           _this.eventEmitter.publish("SEARCH_SIZE_UPDATED." + _this.windowId);
         };
       }
@@ -166,12 +166,10 @@
       // if (this.searchService.config.search.settings.fields.length > 0) {
       this.element.find(".search-disclose-btn-more").on("click", function() {
         _this.showAdvancedSearch();
-        _this.eventEmitter.publish("SEARCH_SIZE_UPDATED." + _this.windowId);
       });
 
       this.element.find(".search-disclose-btn-less").on("click", function() {
         _this.hideAdvancedSearch();
-        _this.eventEmitter.publish("SEARCH_SIZE_UPDATED." + _this.windowId);
       });
     },
 
@@ -296,18 +294,20 @@
 
     showAdvancedSearch: function() {
       this.advancedSearchActive = true;
-      this.element.find("#search-form").hide("fast");
-      this.element.find(".search-disclose").show("fast");
+      this.element.find("#search-form").hide(this.config.showHideAnimation);
+      this.element.find(".search-disclose").show(this.config.showHideAnimation);
       this.element.find(".search-disclose-btn-more").hide();
       this.element.find(".search-disclose-btn-less").show();
+      this.eventEmitter.publish("SEARCH_SIZE_UPDATED." + this.windowId);
     },
 
     hideAdvancedSearch: function() {
       this.advancedSearchActive = false;
-      this.element.find("#search-form").show("fast");
-      this.element.find(".search-disclose").hide("fast");
+      this.element.find("#search-form").show(this.config.showHideAnimation);
+      this.element.find(".search-disclose").hide(this.config.showHideAnimation);
       this.element.find(".search-disclose-btn-less").hide();
       this.element.find(".search-disclose-btn-more").show();
+      this.eventEmitter.publish("SEARCH_SIZE_UPDATED." + this.windowId);
     },
 
     resultsPagerText: Handlebars.compile([
