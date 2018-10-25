@@ -109,7 +109,7 @@
       this.advancedSearch = new $.AdvancedSearchWidget({
         windowId: this.windowId,
         eventEmitter: this.eventEmitter,
-        appendTo: this.element.find('.search-disclosure'),
+        appendTo: this.element.find('.search-disclose'),
         clearMessages: () => { _this.element.find('.pre-search-message').empty(); },
         context: this.context,
         performAdvancedSearch: () => {
@@ -193,7 +193,7 @@
       const config = this.searchService.config;
       const delimiters = config.query.delimiters;
 
-      if (this.element.find(".search-disclosure-btn-less").css("display") != "none") {
+      if (this.element.find(".search-disclose-btn-less").css("display") != "none") {
         // Basic search is active
         const textbox = this.element.find(".js-query").val();
         if (textbox && textbox.length > 0) {
@@ -250,6 +250,11 @@
      *                                  change comes from this widget and has already been applied
      */
     changeContext: function (context, init, suppressEvent) {
+      if (context.searchService !== this.context.searchService) {
+        // Search service change!
+        this.advancedSearch.clearRows();
+        this.advancedSearch.setContext(context, init);
+      }
       jQuery.extend(true, this.context, context);
       if (!suppressEvent) {
         this.eventEmitter.publish('SEARCH_CONTEXT_UPDATED', {

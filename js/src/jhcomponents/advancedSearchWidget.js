@@ -22,7 +22,8 @@
       clearMessages: null,
       context: null,
     }, options);
-
+console.log(' >> Advanced Search Widget');
+console.log(options);
     this.init();
   };
 
@@ -32,7 +33,7 @@
       this.registerPartials();
 
       this.element = jQuery(Handlebars.compile("{{> advancedSearch}}")({
-        "search": _this.searchService
+        "search": _this.context.searchService
       })).appendTo(this.appendTo);
 
       if (this.context && this.context.ui && this.context.ui.advanced) {
@@ -53,11 +54,11 @@
       });
     },
 
-    setSearchService: function (searchService) {
-      this.searchService = searchService;
-      this.setTooltip(searchService);
-      this.addAdvancedSearchLine();
-    },
+    // setSearchService: function (searchService) {
+    //   this.searchService = searchService;
+    //   this.setTooltip(searchService);
+    //   this.addAdvancedSearchLine();
+    // },
 
     bindEvents: function() {
       var _this = this;
@@ -148,14 +149,14 @@
           child = jQuery(child);
 
           parts.push({
-            op: _this.searchService.config.query.delimiters[operation],
+            op: _this.context.searchService.config.query.delimiters[operation],
             category: child.data('query'),
             term: child.val()
           });
         });
       });
 
-      return $.generateQuery(parts, this.searchService.config.query.delimiters.field);
+      return $.generateQuery(parts, this.context.searchService.config.query.delimiters.field);
     },
 
     /**
@@ -190,41 +191,49 @@
 
     initFromContext: function() {
       var _this = this;
-      var ui = this.context.ui.advanced;
 
-      var rowNums = [];
-      this.context.ui.advanced.rows.forEach(function(input, index, arr) {
-        if (rowNums.indexOf(input.row) < 0) {   // Add new line if needed
-          _this.addAdvancedSearchLine();
-          rowNums.push(input.row);
-        }
+      if (this.context.ui && this.context.ui.advanced) {
+        var rowNums = [];
+        this.context.ui.advanced.rows.forEach(function(input, index, arr) {
+          if (rowNums.indexOf(input.row) < 0) {   // Add new line if needed
+            _this.addAdvancedSearchLine();
+            rowNums.push(input.row);
+          }
 
-        var theRow = _this.element.find(".advanced-search-line").last();
-        var user_inputs = theRow.find('.advanced-search-inputs');
-        var inputClass = ".advanced-search-" + input.category;
+          var theRow = _this.element.find(".advanced-search-line").last();
+          var user_inputs = theRow.find('.advanced-search-inputs');
+          var inputClass = ".advanced-search-" + input.category;
 
-        theRow.find(".advanced-search-operators").val(input.operation);
-        theRow.find(".advanced-search-categories").val(input.category);
-        theRow.find(input.type + inputClass).val(input.term);
+          theRow.find(".advanced-search-operators").val(input.operation);
+          theRow.find(".advanced-search-categories").val(input.category);
+          theRow.find(input.type + inputClass).val(input.term);
 
-        // Hide all input/select fields
-        user_inputs.children().hide();
-        user_inputs
-            .find(_this.classNamesToSelector(_this.searchService.config.getField(input.category).class))
-            .show();
-      });
+          // Hide all input/select fields
+          user_inputs.children().hide();
+          user_inputs
+              .find(_this.classNamesToSelector(_this.context.searchService.config.getField(input.category).class))
+              .show();
+        });
+      } else if (this.context.searchService && this.context.searchService.config) {
+        this.addAdvancedSearchLine();
+      }
+    },
+
+    clearRows: function () {
+      this.element.find('.advanced-search-line').remove();
     },
 
     /**
      * Add a new line to the Advanced Search widget.
      */
     addAdvancedSearchLine: function() {
+      console.log('Adding advanced search line');
       var _this = this;
       var template = Handlebars.compile('{{> advancedSearchLine }}');
 
       var templateData = {
-        'search': this.searchService.config.search,
-        'query': this.searchService.config.query
+        'search': this.context.searchService.config.search,
+        'query': this.context.searchService.config.query
       };
       // templateData.search.categories.choices = this.searchService.query.fields;
 
@@ -242,7 +251,7 @@
 
       // Hide all inputs except for the Default choice
       // Makes sure ENTER key presses activate advanced search
-      this.searchService.config.search.settings.fields.forEach(function (field) {
+      this.context.searchService.config.search.settings.fields.forEach(function (field) {
         var element = line.find(_this.classNamesToSelector(field.class));
 
         element.keypress(function(event) {
@@ -278,7 +287,7 @@
         // Hide all input/select fields
         user_inputs.children().hide();
         user_inputs
-            .find(_this.classNamesToSelector(_this.searchService.config.getField(jSelector.val()).class))
+            .find(_this.classNamesToSelector(_this.context.searchService.config.getField(jSelector.val()).class))
             .show();
 
         _this.eventEmitter.publish("SEARCH_SIZE_UPDATED." + _this.windowId);
