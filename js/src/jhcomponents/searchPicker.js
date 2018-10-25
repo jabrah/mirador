@@ -39,6 +39,8 @@
       const _this = this;
 
       this.eventEmitter.subscribe("RELATED_SEARCH_SERVICES_FOUND." + this.windowId, function(event, data) {
+        console.log('SearchPicker ## RELATED_SEARCH_SERVICES_FOUND');
+        console.log(data);
         /*
          * Add search service ID to list.
          * Fetch info.json only when that service is selected for the first time.
@@ -52,10 +54,14 @@
     listenForActions: function () {
       const _this = this;
 
-      function selectChange() {
-        var selected = jQuery(this).val();
+      const selectChange = function () {
+        const el = jQuery(this);
+        if (!el) {
+          return;
+        }
+        var selected = el.val();
         _this.switchSearchServices(selected);
-      }
+      };
 
       this.element.find(".search-within-object-select").on("change", selectChange);
       if (!this.config.inSidebar) {
@@ -70,8 +76,7 @@
         origin: this.windowId,
         service
       });
-
-      this.element.find('.search-within-object-select').val(service.id);
+      // this.element.find('.search-within-object-select').val(service.id);
     },
 
     addSearchService: function(service) {

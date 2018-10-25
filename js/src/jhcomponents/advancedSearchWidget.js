@@ -22,8 +22,7 @@
       clearMessages: null,
       context: null,
     }, options);
-console.log(' >> Advanced Search Widget');
-console.log(options);
+
     this.init();
   };
 
@@ -227,7 +226,6 @@ console.log(options);
      * Add a new line to the Advanced Search widget.
      */
     addAdvancedSearchLine: function() {
-      console.log('Adding advanced search line');
       var _this = this;
       var template = Handlebars.compile('{{> advancedSearchLine }}');
 
