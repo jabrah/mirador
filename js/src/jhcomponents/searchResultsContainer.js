@@ -19,6 +19,16 @@
   $.SearchResultsContainer.prototype = {
     init: function () {
       this.element = jQuery(this.template()).appendTo(this.appendTo);
+
+      this.searchPager = new $.SearchPager({
+        windowId: this.windowId,
+        appendTo: this.element.find('.search-results-container'),
+        state: this.state,
+        eventEmitter: this.eventEmitter,
+        config: this.config,
+        context: this.context
+      });
+
       this.bindEvents();
     },
 
@@ -36,6 +46,7 @@
 
     changeContext: function (context) {
       this.context = context;
+      this.searchPager.changeContext(context, true);
     },
 
     clear: function () {
@@ -43,14 +54,7 @@
     },
 
     handleSearchResults: function (searchResults) {
-      // if (this.element.find('.search-results-display').length === 0) {
-      //   this.element.append(jQuery(this.template()));
-      // }
       this.clear();
-
-      if (!this.perPageCount) {
-        this.perPageCount = searchResults.max_matches || searchResults.matches.length;
-      }
 
       this.searchResults = new $.SearchResults({
         parentId: this.windowId,
@@ -62,22 +66,32 @@
         config: this.config
       });
 
-      let last = parseInt(searchResults.offset) + this.perPageCount;
+      let last = parseInt(searchResults.offset) + this.context.search.maxPerPage;
       if (last > searchResults.total) {
         last = searchResults.total;
       }
 
       // TODO pager logic
+      if (this.needsPager(searchResults)) {
+        this.searchPager.setPagerText(searchResults.offset + 1, last, searchResults.total);
+        this.searchPager.setPager(searchResults);
+        this.searchPager.show();
+      } else {
+        this.searchPager.hide();
+      }
 
       this.appendTo.find('.search-results-display').slideDown(160);
+    },
+
+    needsPager: function (results) {
+      return results.offset > 0 ||
+          results.offset + (results.max_matches || results.matches.length) < results.total;
     },
 
     template: Handlebars.compile([
       '<div class="search-results-display" style="display:none;">',
         '<div class="search-results-close"><i class="fa fa-2x fa-caret-up" title="Close results"></i>Close results</div>',
         '<div class="search-results-container">',
-          '<div class="results-pager"></div>',
-          '<p class="results-pager-text"></p>',
           '<div class="search-results-list"></div>',
         '</div>',
       '</div>',
