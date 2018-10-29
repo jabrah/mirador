@@ -58,9 +58,9 @@
             "showCollectionPicker": this.searchConfig.showCollectionPicker,
             "showDescription": this.searchConfig.showDescription
           },
-          "onFacetSelect": function (selected) {
-            _this.filterManifestList(selected);
-          },
+          // "onFacetSelect": function (selected) {
+          //   _this.filterManifestList(selected);
+          // },
           searchController: new $.SearchController({
             eventEmitter: this.eventEmitter
           }),

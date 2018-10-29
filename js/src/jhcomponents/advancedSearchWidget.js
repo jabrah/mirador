@@ -42,7 +42,10 @@
       // this.setTooltip(this.searchService);
       this.bindEvents();
       this.listenForActions();
-      // this.addAdvancedSearchLine();
+
+      // if (this.context && this.context.searchService) {
+      //   this.addAdvancedSearchLine();
+      // }
     },
 
     setTooltip: function (searchService) {
