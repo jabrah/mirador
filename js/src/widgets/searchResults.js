@@ -41,8 +41,7 @@
   $.SearchResults.prototype = {
     init: function() {
       jQuery(this.appendTo).empty();
-console.log(' ## SearchResults ##');
-console.log(this);
+
       // Check for bad or no results.
       if (!this.context.search.results || !this.context.search.results.matches || this.context.search.results.matches.length === 0) {
         jQuery(this.noResultsMessage()).appendTo(this.appendTo);

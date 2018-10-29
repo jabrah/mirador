@@ -19,6 +19,7 @@
   $.SearchResultsContainer.prototype = {
     init: function () {
       this.element = jQuery(this.template()).appendTo(this.appendTo);
+      this.bindEvents();
     },
 
     listenForActions: function () {
@@ -26,8 +27,10 @@
     },
 
     bindEvents: function () {
-      this.element.find(".search-results-close").on("click", function() {
-        _this.appendTo.find(".search-results-display").slideUp(160);
+      const _this = this;
+
+      this.element.find('.search-results-close').on("click", () => {
+        _this.element.slideUp(160);
       });
     },
 
@@ -43,7 +46,7 @@
       // if (this.element.find('.search-results-display').length === 0) {
       //   this.element.append(jQuery(this.template()));
       // }
-      this.element.find('.search-results-list').empty();
+      this.clear();
 
       if (!this.perPageCount) {
         this.perPageCount = searchResults.max_matches || searchResults.matches.length;
