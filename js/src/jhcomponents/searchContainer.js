@@ -110,6 +110,10 @@
         context: this.context
       }));
 
+      this.searchResults = new $.SearchResultsContainer(jQuery.extend(true, baseConfig, {
+        context: this.context
+      }));
+
       if (!this.config.inSidebar && this.config.allowFacets) {
         this.facetContainer = new $.FacetContainer(jQuery.extend(true, baseConfig, {}));
       }
@@ -131,19 +135,7 @@
         if (data.origin !== _this.windowId) {
           return;
         }
-
-        const context = _this.context;
-        const searchRequest = {
-          origin: _this.windowId,
-          service: context.searchService,
-          query: context.search.query,
-          offset: context.search.offset || 0,
-          maxPerPage: context.search.maxPerPage || 30,
-          sortOrder: context.search.sortOrder,
-          facets: context.search.facetQuery
-        };
-        _this.eventEmitter.publish('SEARCH', searchRequest);
-        _this.searchController.doSearch(searchRequest);
+        _this.doSearch();
       });
 
       this.eventEmitter.subscribe('ADD_IIIF_OBJECT', (event, data) => {
@@ -179,6 +171,7 @@
         jQuery.extend(true, this.context, context);
         this.searchWidget.changeContext(this.context, true, true);
         this.facetContainer.changeContext(this.context);
+        this.searchResults.changeContext(this.context);
 
         if (!suppressEvent) {
           this.eventEmitter.publish('SEARCH_CONTEXT_UPDATED', {
@@ -227,6 +220,35 @@
           searchService
         }, true, false);
       });
+    },
+
+    doSearch: function () {
+      const _this = this;
+
+      const context = this.context;
+      const searchRequest = {
+        origin: this.windowId,
+        service: context.searchService,
+        query: context.search.query,
+        offset: context.search.offset || 0,
+        maxPerPage: context.search.maxPerPage || 30,
+        sortOrder: context.search.sortOrder,
+        facets: context.search.facetQuery
+      };
+      // _this.eventEmitter.publish('SEARCH', searchRequest);
+      this.searchController.doSearch(searchRequest).done((data) => {
+        _this.handleSearchResults(data);
+      });
+      this.searchResults.clear();
+    },
+
+    handleSearchResults: function (data) {
+      this.changeContext({
+        search: {
+          results: data
+        }
+      });
+      this.searchResults.handleSearchResults(data);
     },
 
     getFacets: function (facetQuery) {

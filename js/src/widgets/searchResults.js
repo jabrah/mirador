@@ -41,7 +41,8 @@
   $.SearchResults.prototype = {
     init: function() {
       jQuery(this.appendTo).empty();
-
+console.log(' ## SearchResults ##');
+console.log(this);
       // Check for bad or no results.
       if (!this.context.search.results || !this.context.search.results.matches || this.context.search.results.matches.length === 0) {
         jQuery(this.noResultsMessage()).appendTo(this.appendTo);
@@ -145,8 +146,7 @@
         var windowConfig = _this.queuedAction.windowConfig;
         windowConfig.manifest = data.manifest;
         windowConfig.searchContext = _this.context;
-console.log(' MOOING ');
-console.log(windowConfig);
+
         switch (_this.queuedAction.target) {
           case "above":
             _this.eventEmitter.publish(

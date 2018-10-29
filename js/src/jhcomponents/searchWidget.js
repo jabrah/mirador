@@ -188,16 +188,16 @@
     getSearchQuery: function() {
       let query;
 
-      const config = this.searchService.config;
+      const config = this.context.searchService.config;
       const delimiters = config.query.delimiters;
 
-      if (this.element.find(".search-disclose-btn-less").css("display") != "none") {
+      if (this.element.find(".search-disclose-btn-more").css("display") != "none") {
         // Basic search is active
         const textbox = this.element.find(".js-query").val();
         if (textbox && textbox.length > 0) {
           query = $.generateBasicQuery(
             textbox,
-            this.searchService.config.getDefaultFields(),
+            this.context.searchService.config.getDefaultFields(),
             delimiters.or
           );
         }
@@ -285,11 +285,19 @@
       }
 
       if (this.context.searchService && this.context.search.query) {
-        this.addSearchService(this.context.searchService);
+        // this.addSearchService(this.context.searchService);
         if (this.context.search.results) {
-          this.handleSearchResults(this.context.search.results);
+          // this.handleSearchResults(this.context.search.results);
         }
       }
+    },
+
+    getUIState: function () {
+      const showAdvanced = this.element.find('.search-disclose-btn-more').css('dislpay') == 'none';
+      return {
+        basic: this.element.find('.js-query').val(),
+        advanced: showAdvanced ? this.advancedSearch.searchState() : undefined
+      };
     },
 
     showAdvancedSearch: function() {
@@ -336,14 +344,14 @@
           '<div class="search-disclose" style="display: none;"></div>',
         '</div>',
       '</div>',
-      '<div class="search-results-display" style="display:none;">',
-        '<div class="search-results-close"><i class="fa fa-2x fa-caret-up" title="Close results"></i>Close results</div>',
-        '<div class="search-results-container">',
-          '<div class="results-pager"></div>',
-          '<p class="results-pager-text"></p>',
-          '<div class="search-results-list"></div>',
-        '</div>',
-      '</div>',
+      // '<div class="search-results-display" style="display:none;">',
+      //   '<div class="search-results-close"><i class="fa fa-2x fa-caret-up" title="Close results"></i>Close results</div>',
+      //   '<div class="search-results-container">',
+      //     '<div class="results-pager"></div>',
+      //     '<p class="results-pager-text"></p>',
+      //     '<div class="search-results-list"></div>',
+      //   '</div>',
+      // '</div>',
     ].join('')),
   };
 }(Mirador));
