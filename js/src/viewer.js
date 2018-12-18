@@ -60,6 +60,12 @@
     var windowSettings = this.state.getStateProperty('windowSettings');
     windowSettings.teiUtil = new $.TeiUtils();
     this.state.set('windowSettings', windowSettings, {parent: 'currentConfig'});
+
+    if (this.state.getStateProperty('showWhatsNew')) {
+      new $.WhatsNewModal({
+        appendTo: this.element
+      });
+    }
   };
 
   $.Viewer.prototype = {

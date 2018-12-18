@@ -187,6 +187,9 @@ module.exports = function(grunt) {
         }, {
           src: 'aor_rmap_context.json',
           dest: 'build/mirador/aor_rmap_context.json'
+        }, {
+          src: 'whatsNew.html',
+          dest: 'build/mirador/whatsNew.html'
         }
       ]
       }

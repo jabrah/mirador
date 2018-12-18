@@ -253,7 +253,9 @@
         api: '/api/discos',
         resolver: '/app/discos/'
       }
-    }
+    },
+
+    showWhatsNew: false
   };
 
 }(Mirador));
